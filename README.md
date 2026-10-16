@@ -2,7 +2,7 @@
 
 Planificador de viajes en tren, metro y autobús por Gipuzkoa y Bizkaia, con el catálogo de líneas y paradas, los avisos de la red y la gestión de tu tarjeta MUGI.
 
-- **Web:** https://zer0dev-exe.github.io/MugiManager/
+- **Web:** https://zer0.is-a.dev/MugiManager/
 - **API:** https://mugimanager.vercel.app
 - **App Android:** descarga el APK desde [Releases](https://github.com/Zer0Dev-exe/MugiManager/releases). En iPhone y Android también se puede instalar desde la web con «Añadir a pantalla de inicio».
 
