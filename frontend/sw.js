@@ -1,6 +1,6 @@
 // Service worker de MugiManager: guarda la web para abrirla rápido y sin conexión.
 // Las llamadas a la API nunca se guardan en caché (saldo, rutas y avisos deben ser actuales).
-const CACHE = "mugimanager-v14";
+const CACHE = "mugimanager-v15";
 const APP_SHELL = [
   "./",
   "index.html",
