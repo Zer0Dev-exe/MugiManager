@@ -26,3 +26,6 @@ frontend/img/favicon.*
 test_auth.py
 test_portal_scraper_*.py
 verify_backend.py
+
+.vercel
+.env*

@@ -3,6 +3,7 @@
 Planificador de viajes en tren, metro y autobús por Gipuzkoa y Bizkaia, con el catálogo de líneas y paradas, los avisos de la red y la gestión de tu tarjeta MUGI.
 
 - **Web:** https://zer0dev-exe.github.io/MugiManager/
+- **API:** https://mugimanager.vercel.app
 - **App Android:** descarga el APK desde [Releases](https://github.com/Zer0Dev-exe/MugiManager/releases). En iPhone y Android también se puede instalar desde la web con «Añadir a pantalla de inicio».
 
 > **Proyecto independiente.** MugiManager no está afiliado a MUGI, a la Autoridad Territorial del Transporte de Gipuzkoa (ATTG) ni a los operadores. Horarios y tiempos de viaje son orientativos.
@@ -21,7 +22,7 @@ Planificador de viajes en tren, metro y autobús por Gipuzkoa y Bizkaia, con el 
 |---|---|---|
 | Web / PWA | GitHub Pages | `frontend/` (HTML, CSS y JS sin compilación) |
 | App Android | APK en las releases | Capacitor sobre `frontend/` (`capacitor.config.json`) |
-| API | Vercel (función Python) | `backend/` (FastAPI), entrada en `api/index.py` |
+| API | Vercel (función Python) | `backend/` (FastAPI), entrada en `main.py` |
 
 La URL de la API que usan la web y la app está en `frontend/js/config.js`.
 
@@ -40,7 +41,7 @@ Abre http://127.0.0.1:8000. En local el propio backend sirve la web.
 ## Despliegue
 
 - **Web**: cada push a `main` que toca `frontend/` publica en GitHub Pages (`.github/workflows/pages.yml`).
-- **API**: `vercel --prod` desde la raíz. Hay que definir la variable `MUGI_SECRET`, que firma los tokens de sesión.
+- **API**: `vercel deploy --prod` desde la raíz (Vercel detecta FastAPI y sirve `app` de `main.py`). Hay que definir la variable `MUGI_SECRET`, que firma los tokens de sesión.
 - **Release**: al subir una etiqueta `vX.Y.Z`, GitHub Actions compila el APK con Capacitor y lo publica junto a un zip de la web (`.github/workflows/release.yml`).
 
 ### Limitaciones conocidas

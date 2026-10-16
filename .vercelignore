@@ -13,3 +13,5 @@ frontend/img/card_straight.png
 frontend/img/*shield*.png
 frontend/favicon.*
 frontend/img/favicon.*
+.env*
+.vercel
