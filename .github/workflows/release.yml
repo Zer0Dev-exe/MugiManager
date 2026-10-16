@@ -1,0 +1,55 @@
+name: Release (APK Android + web)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar proyecto Android
+        run: |
+          npm run android:add
+          npm run android:icons
+          npm run android:sync
+
+      - name: Compilar APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Preparar archivos de la release
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          mkdir -p dist
+          cp android/app/build/outputs/apk/debug/app-debug.apk "dist/MugiManager-${VERSION}.apk"
+          (cd frontend && zip -r "../dist/MugiManager-web-${VERSION}.zip" .)
+
+      - name: Publicar release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: MugiManager ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/*

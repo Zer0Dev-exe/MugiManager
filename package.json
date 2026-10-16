@@ -1,0 +1,19 @@
+{
+  "name": "mugimanager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MugiManager: planificador de viajes en Gipuzkoa y Bizkaia (web, PWA y app Android).",
+  "scripts": {
+    "android:add": "cap add android",
+    "android:icons": "capacitor-assets generate --android --iconBackgroundColor \"#0e8f6a\" --splashBackgroundColor \"#081a30\"",
+    "android:sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "3.0.5",
+    "@capacitor/cli": "8.5.3"
+  }
+}

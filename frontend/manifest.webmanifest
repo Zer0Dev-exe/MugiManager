@@ -1,0 +1,17 @@
+{
+  "name": "MugiManager",
+  "short_name": "MugiManager",
+  "description": "Planifica tus viajes en tren, metro y autobús por Gipuzkoa y Bizkaia. Proyecto independiente, no oficial.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f9fc",
+  "theme_color": "#081a30",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

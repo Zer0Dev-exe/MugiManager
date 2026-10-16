@@ -1,0 +1,28 @@
+# Entornos y dependencias
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+
+# Datos de usuarios y cachés locales (nunca se suben)
+backend/data/
+
+# Proyecto Android generado (se crea en CI con `npm run android:add`)
+android/
+
+# Vercel
+.vercel/
+
+# Imágenes no usadas: fotos de personas y material de terceros
+/Tarjeta_*.jpg
+frontend/img/Tarjeta_*.jpg
+frontend/img/holder_ane.jpg
+frontend/img/card_straight.png
+frontend/img/*shield*.png
+frontend/favicon.*
+frontend/img/favicon.*
+
+# Pruebas con datos personales
+test_auth.py
+test_portal_scraper_*.py
+verify_backend.py

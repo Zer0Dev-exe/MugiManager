@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MugiManager · Planifica tu viaje en Gipuzkoa</title>
+  <meta name="description" content="MugiManager: planificador de viajes en tren, metro y autobús por Gipuzkoa y Bizkaia, líneas y paradas, avisos de la red y gestión de tu tarjeta MUGI. Proyecto independiente, no oficial.">
+  <meta name="theme-color" content="#081a30">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="img/logo.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+  <link rel="apple-touch-icon" href="img/icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/mugi_style.css?v=14.0">
+</head>
+<body>
+
+  <!-- =====================================================================
+       SPRITE DE ICONOS SVG VECTORIALES (Sin Emojis)
+       ===================================================================== -->
+  <svg style="display: none;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- Tarjeta MUGI -->
+      <symbol id="icon-card" viewBox="0 0 24 24">
+        <rect x="2" y="5" width="20" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="2" y1="10" x2="22" y2="10" stroke="currentColor" stroke-width="2"/>
+        <rect x="5" y="13" width="4" height="3" rx="0.5" fill="currentColor"/>
+        <circle cx="17" cy="14.5" r="1.5" fill="currentColor"/>
+      </symbol>
+
+      <!-- Red y Líneas -->
+      <symbol id="icon-network" viewBox="0 0 24 24">
+        <circle cx="5" cy="6" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="19" cy="6" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M7.5 7.5L10 16M16.5 7.5L14 16M8 6h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Planificador de Transbordos -->
+      <symbol id="icon-transfer" viewBox="0 0 24 24">
+        <path d="M4 8h12M13 5l3 3-3 3M20 16H8M11 13l-3 3 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Avisos e Incidencias -->
+      <symbol id="icon-alert" viewBox="0 0 24 24">
+        <path d="M12 2L1 21h22L12 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="17" r="1.2" fill="currentColor"/>
+      </symbol>
+
+      <!-- Machine Learning / IA -->
+      <symbol id="icon-brain" viewBox="0 0 24 24">
+        <path d="M9.5 3a4 4 0 00-4 4c0 .6.14 1.18.39 1.7A4 4 0 003 12.5a4 4 0 003.14 3.9A4 4 0 0010 21c.7 0 1.36-.18 1.94-.5A4 4 0 0018 16.4a4 4 0 003-3.9 4 4 0 00-2.89-3.8A4 4 0 0018.5 7a4 4 0 00-4-4c-.74 0-1.44.2-2.04.57A4.02 4.02 0 009.5 3z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="9" cy="9" r="1.2" fill="currentColor"/>
+        <circle cx="15" cy="9" r="1.2" fill="currentColor"/>
+        <path d="M12 7v10M8 13h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Editar / Calibrar -->
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Plus / Recarga -->
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="8" x2="12" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Usuario / Perfil -->
+      <symbol id="icon-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M4 21v-2a4 4 0 014-4h8a4 4 0 014 4v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Cerrojo / Auth -->
+      <symbol id="icon-lock" viewBox="0 0 24 24">
+        <rect x="4" y="10" width="16" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 10V7a4 4 0 118 0v3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="12" cy="15.5" r="1.5" fill="currentColor"/>
+      </symbol>
+
+      <!-- Web Scraping / Refrescar -->
+      <symbol id="icon-refresh" viewBox="0 0 24 24">
+        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 12a10 10 0 0117.5-6.5L21.5 8M22 12a10 10 0 01-17.5 6.5L2.5 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Tren -->
+      <symbol id="icon-train" viewBox="0 0 24 24">
+        <rect x="4" y="3" width="16" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="4" y1="9" x2="20" y2="9" stroke="currentColor" stroke-width="2"/>
+        <circle cx="8" cy="13.5" r="1.5" fill="currentColor"/>
+        <circle cx="16" cy="13.5" r="1.5" fill="currentColor"/>
+        <path d="M6 19l-2 3M18 19l2 3M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Autobús -->
+      <symbol id="icon-bus" viewBox="0 0 24 24">
+        <rect x="4" y="3" width="16" height="15" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="4" y1="10" x2="20" y2="10" stroke="currentColor" stroke-width="2"/>
+        <circle cx="7.5" cy="15" r="1.5" fill="currentColor"/>
+        <circle cx="16.5" cy="15" r="1.5" fill="currentColor"/>
+        <path d="M7 19v2M17 19v2M9 5h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Reloj / Horario -->
+      <symbol id="icon-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <polyline points="12 6 12 12 16 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Rayo / ML Predictor -->
+      <symbol id="icon-bolt" viewBox="0 0 24 24">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Globo / Web Scraping Live -->
+      <symbol id="icon-globe" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/>
+        <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" fill="none" stroke="currentColor" stroke-width="2"/>
+      </symbol>
+
+      <!-- Enlace Externo -->
+      <symbol id="icon-external" viewBox="0 0 24 24">
+        <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Buscar -->
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Check / Verificado -->
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M8 12l3 3 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Info -->
+      <symbol id="icon-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="16" x2="12" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="8" r="1.2" fill="currentColor"/>
+      </symbol>
+
+      <!-- Cerrar Modal -->
+      <symbol id="icon-close" viewBox="0 0 24 24">
+        <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Flecha derecha -->
+      <symbol id="icon-arrow-right" viewBox="0 0 24 24">
+        <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Intercambiar origen/destino -->
+      <symbol id="icon-swap" viewBox="0 0 24 24">
+        <path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Ubicación -->
+      <symbol id="icon-pin" viewBox="0 0 24 24">
+        <path d="M12 22s7-6.2 7-12a7 7 0 10-14 0c0 5.8 7 12 7 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/>
+      </symbol>
+
+      <!-- Escudo -->
+      <symbol id="icon-shield" viewBox="0 0 24 24">
+        <path d="M12 2l8 3v6c0 5-3.5 9.5-8 11-4.5-1.5-8-6-8-11V5l8-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M8.5 12l2.5 2.5 4.5-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Andar -->
+      <symbol id="icon-walk" viewBox="0 0 24 24">
+        <circle cx="13" cy="4" r="2" fill="currentColor"/>
+        <path d="M10 22l2-7 3 3v4M8 12l2-4 4 1 2 4 3 1M10 8l-1 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <!-- =====================================================================
+       HEADER MUGIMANAGER
+       ===================================================================== -->
+  <header class="main-header">
+    <div class="header-top">
+      <div class="header-inner">
+        <div class="header-brand" onclick="switchTab('tab-planificador')" title="MugiManager · Planifica tu viaje en Gipuzkoa">
+          <img class="brand-logo" src="img/logo.svg" alt="" width="42" height="42">
+          <div class="brand-text-block">
+            <div class="brand-title">Mugi<span class="brand-title-accent">Manager</span></div>
+            <div class="brand-tagline">Planifica tu viaje &bull; Gipuzkoa</div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-live-pill" title="Datos de la red sincronizados con mugi.eus">
+            <span class="live-dot"></span>
+            <span>Red en directo</span>
+          </div>
+
+          <button id="btn-sync-topbar" class="header-sync-btn" title="Actualizar avisos y tarifas desde mugi.eus">
+            <svg class="svg-icon"><use href="#icon-refresh"></use></svg>
+            <span>Sincronizar</span>
+          </button>
+
+          <div id="header-auth-box">
+            <!-- Renderizado dinámicamente con JS (Botón Login o Cápsula de Usuario) -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-nav-bar">
+      <div class="header-inner">
+        <nav class="main-nav" aria-label="Navegación principal">
+          <button class="nav-tab-btn active" data-tab="tab-planificador">
+            <svg class="svg-icon"><use href="#icon-transfer"></use></svg>
+            <span>Planificar Viaje</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-red">
+            <svg class="svg-icon"><use href="#icon-network"></use></svg>
+            <span>Trenes y Buses</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-tarjeta">
+            <svg class="svg-icon"><use href="#icon-card"></use></svg>
+            <span>Mi Tarjeta</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-incidencias">
+            <svg class="svg-icon"><use href="#icon-alert"></use></svg>
+            <span>Avisos</span>
+          </button>
+          <button class="nav-tab-btn" data-tab="tab-ml">
+            <svg class="svg-icon"><use href="#icon-brain"></use></svg>
+            <span>Predicciones IA</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- 5. Contenedor Principal de la Aplicación -->
+  <main class="page-container">
+
+    <!-- =====================================================================
+         TAB 1: MI TARJETA MUGI (Gestión de Saldo Real, Recargas y Tramos)
+         ===================================================================== -->
+    <div id="tab-tarjeta" class="tab-pane">
+      <!-- Aviso para usuarios sin sesión: la tarjeta y el historial solo se muestran al titular -->
+      <div id="card-login-gate" class="gov-card section-card card-gate">
+        <div class="card-gate-icon">
+          <svg class="svg-icon"><use href="#icon-lock"></use></svg>
+        </div>
+        <h2>Inicia sesión para ver tu tarjeta MUGI</h2>
+        <p>Consulta tu saldo, tu tramo de descuento y el historial de viajes con tu cuenta. El resto de la web (planificar viaje, trenes y buses, avisos) funciona sin iniciar sesión.</p>
+        <div class="card-gate-actions">
+          <button id="btn-gate-login" class="btn-primary">
+            <svg class="svg-icon"><use href="#icon-lock"></use></svg>
+            <span>Iniciar sesión</span>
+          </button>
+          <button id="btn-gate-register" class="btn-secondary">
+            <span>Crear cuenta</span>
+          </button>
+        </div>
+      </div>
+      <div class="gov-card" id="card-area" style="display: none;">
+        <div class="gov-card-header">
+          <div>
+            <h2>
+              <svg class="svg-icon" style="color: var(--mugi-green);"><use href="#icon-card"></use></svg>
+              <span>Mi Tarjeta MUGI y Saldo Real</span>
+            </h2>
+            <p>Control exacto de tu saldo real, historial de validaciones y cálculo de tramos de descuento ATTG.</p>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="btn-open-simulate" class="btn-secondary">
+              <svg class="svg-icon"><use href="#icon-transfer"></use></svg>
+              <span>Simular Viaje / Transbordo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel Visual de la Tarjeta y Desglose de Saldo -->
+        <div class="balance-panel-grid" style="margin-top: 18px;">
+          <!-- Representación de la tarjeta MUGI del usuario -->
+          <div>
+            <div class="mugi-card-perspective" style="perspective: 1000px; width: 100%; max-width: 440px; margin: 0 auto;">
+              <div id="mugi-card-flip" class="mugi-card-flip-inner" style="position: relative; width: 100%; height: 265px; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d;">
+                <!-- CARA FRONTAL (ANVERSO) -->
+                <div class="mugi-card-front" style="position: absolute; top: 0; left: 0; width: 100%; height: 265px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #a6ce1e 0%, #9ec91d 45%, #8db814 100%); backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: 0 14px 34px rgba(130, 171, 18, 0.4), 0 4px 14px rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.75);">
+                  <div class="card-brand-badge">MUGI</div>
+
+                  <!-- Cinta / bucle multicolor tridimensional en esquina inferior derecha -->
+                  <svg viewBox="0 0 260 210" width="240" height="195" style="position: absolute; bottom: -12px; right: -12px; z-index: 1; pointer-events: none;" fill="none">
+                    <defs>
+                      <linearGradient id="magentaGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#c2185b"/>
+                        <stop offset="50%" stop-color="#e91e63"/>
+                        <stop offset="100%" stop-color="#f06292"/>
+                      </linearGradient>
+                      <linearGradient id="purpleGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#4a148c"/>
+                        <stop offset="60%" stop-color="#7b1fa2"/>
+                        <stop offset="100%" stop-color="#ab47bc"/>
+                      </linearGradient>
+                      <linearGradient id="cyanGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#01579b"/>
+                        <stop offset="50%" stop-color="#0288d1"/>
+                        <stop offset="100%" stop-color="#29b6f6"/>
+                      </linearGradient>
+                      <linearGradient id="greenGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#1b5e20"/>
+                        <stop offset="50%" stop-color="#2e7d32"/>
+                        <stop offset="100%" stop-color="#4caf50"/>
+                      </linearGradient>
+                      <linearGradient id="yellowGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f57f17"/>
+                        <stop offset="50%" stop-color="#fbc02d"/>
+                        <stop offset="100%" stop-color="#ffeb3b"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M 260,110 C 200,105 150,140 100,210 L 145,210 C 185,160 215,135 260,130 Z" fill="url(#yellowGrad)"/>
+                    <path d="M 260,80 C 185,82 125,130 75,210 L 105,210 C 145,145 195,105 260,102 Z" fill="url(#magentaGrad)"/>
+                    <path d="M 260,56 C 165,58 105,120 52,210 L 78,210 C 122,135 175,80 260,74 Z" fill="url(#purpleGrad)"/>
+                    <path d="M 260,34 C 145,36 82,110 30,210 L 54,210 C 98,125 152,58 260,50 Z" fill="url(#cyanGrad)"/>
+                    <path d="M 260,14 C 128,16 62,95 10,210 L 32,210 C 78,110 136,36 260,28 Z" fill="url(#greenGrad)"/>
+                  </svg>
+
+                  <!-- Sección izquierda con foto y datos del titular -->
+                  <div class="mugi-official-left-col" style="position: absolute; top: 16px; left: 18px; z-index: 2; width: 172px; display: flex; flex-direction: column;">
+                    <!-- Marco foto carné con la típica silueta de usuario neutra -->
+                    <div class="mugi-official-photo-box" style="width: 74px; height: 94px; background: #ffffff; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 7px rgba(0, 0, 0, 0.22); border: 2px solid rgba(255, 255, 255, 0.95); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <svg viewBox="0 0 74 94" width="74" height="94" style="display: block;">
+                        <defs>
+                          <linearGradient id="userAvatarBg" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#f1f5f9"/>
+                          </linearGradient>
+                          <linearGradient id="userAvatarBody" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#94a3b8"/>
+                            <stop offset="100%" stop-color="#64748b"/>
+                          </linearGradient>
+                        </defs>
+                        <rect width="74" height="94" fill="url(#userAvatarBg)"/>
+                        <rect x="2.5" y="2.5" width="69" height="89" rx="2" fill="none" stroke="#cbd5e1" stroke-width="0.8" stroke-dasharray="3 3"/>
+                        <!-- Cabeza silueta -->
+                        <circle cx="37" cy="36" r="14" fill="url(#userAvatarBody)"/>
+                        <!-- Torso / Hombros silueta carné -->
+                        <path d="M 14,84 C 14,64 24,56 32,56 L 42,56 C 50,56 60,64 60,84 Z" fill="url(#userAvatarBody)"/>
+                      </svg>
+                    </div>
+
+                    <div class="mugi-official-names-block" style="margin-top: 8px;">
+                      <div id="card-display-surnames" class="mugi-official-surnames" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.88rem; font-weight: 700; color: #1e293b; line-height: 1.2; letter-spacing: 0.2px;"></div>
+                      <div id="card-display-firstname" class="mugi-official-firstname" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.85rem; font-weight: 600; color: #334155; line-height: 1.2; margin-top: 1px;"></div>
+                      <div id="card-display-number" class="mugi-official-number-text" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 0.98rem; font-weight: 700; color: #0f172a; letter-spacing: 1.2px; margin-top: 5px;"></div>
+                      <div id="card-display-colectivo" class="mugi-official-colectivo-letter" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.95rem; font-weight: 800; color: #142b04; margin-top: 2px; letter-spacing: 1.5px; min-height: 16px;"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- CARA TRASERA (REVERSO) -->
+                <div class="mugi-card-back" style="position: absolute; top: 0; left: 0; width: 100%; height: 265px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #a6ce1e 0%, #9ec91d 45%, #8db814 100%); transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 20px 14px; box-shadow: 0 14px 34px rgba(130, 171, 18, 0.4), 0 4px 14px rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.75);">
+                  <!-- Cinta decorativa superior derecha idéntica al reverso real -->
+                  <svg viewBox="0 0 200 160" width="190" height="155" style="position: absolute; top: -8px; right: -8px; pointer-events: none; z-index: 1;" fill="none">
+                    <path d="M 200,0 C 130,5 90,60 55,160 L 80,160 C 110,80 145,30 200,20 Z" fill="#e91e63"/>
+                    <path d="M 200,20 C 150,25 115,75 80,160 L 105,160 C 135,90 165,45 200,40 Z" fill="#7b1fa2"/>
+                    <path d="M 200,40 C 170,45 140,85 105,160 L 130,160 C 155,105 180,60 200,55 Z" fill="#fbc02d"/>
+                    <path d="M 200,0 C 160,0 120,40 100,100 C 140,40 180,20 200,0 Z" fill="#004d25"/>
+                  </svg>
+
+                  <!-- Área superior del reverso -->
+                  <div class="mugi-back-top-row" style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="mugi-back-chip-box" style="display: flex; align-items: center; gap: 10px;">
+                      <div class="mugi-chip-gold" style="width: 36px; height: 26px; background: linear-gradient(135deg, #fbe282 0%, #dfb537 50%, #b8860b 100%); border-radius: 4px; border: 1px solid #996515; box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6); position: relative; display: flex; flex-direction: column; justify-content: space-evenly; padding: 3px;">
+                        <div class="mugi-chip-line" style="height: 1px; background: rgba(153, 101, 21, 0.7); width: 100%;"></div>
+                        <div class="mugi-chip-line" style="height: 1px; background: rgba(153, 101, 21, 0.7); width: 100%;"></div>
+                      </div>
+                      <span class="mugi-contactless-icon" style="color: #142b04; opacity: 0.85; display: flex; align-items: center;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5h-2v-2h2v2zm0-4h-2V7h2v5.5z"/>
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Centro del reverso: Textos ATTG a dos columnas -->
+                  <div class="mugi-official-back-body" style="position: relative; z-index: 2; margin-top: auto; margin-bottom: auto; padding: 10px 0;">
+                    <div class="mugi-attg-two-cols" style="display: flex; align-items: center; gap: 14px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.70rem; font-weight: 700; color: #142b04; line-height: 1.25;">
+                      <div class="attg-col-eu" style="display: flex; flex-direction: column; gap: 2px;">
+                        <div>Gipuzkoako Garraioak</div>
+                        <div>Gipuzkoako Garraioaren</div>
+                        <div>Lurralde Agintaritza</div>
+                      </div>
+                      <div class="attg-divider-line" style="width: 1.5px; height: 38px; background: #142b04; opacity: 0.55; flex-shrink: 0;"></div>
+                      <div class="attg-col-es" style="display: flex; flex-direction: column; gap: 2px;">
+                        <div>Transportes de Gipuzkoa</div>
+                        <div>Autoridad Territorial del</div>
+                        <div>Transporte de Gipuzkoa</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pie del reverso -->
+                  <div class="mugi-official-back-footer" style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; font-weight: 800; color: #0b254a; border-top: 1px solid rgba(20, 43, 4, 0.15); padding-top: 8px;">
+                    <div class="mugi-back-phone" style="display: inline-flex; align-items: center; gap: 5px;">
+                      <span class="mugi-info-circle-badge" style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; border: 1.8px solid #0b254a; font-size: 0.72rem; font-weight: 900; font-family: serif; font-style: italic; line-height: 1;">i</span>
+                      <span>943 000 117</span>
+                    </div>
+                    <div class="mugi-back-url" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 0.82rem; font-weight: 800; color: #0b254a;">www.mugipuzkoa.com</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón para girar y ver reverso -->
+            <div style="margin-top: 12px; display: flex; gap: 8px;">
+              <button id="btn-flip-card" class="btn-secondary" style="flex: 1; font-size: 0.82rem; justify-content: center; padding: 7px 14px;">
+                <svg class="svg-icon"><use href="#icon-refresh"></use></svg>
+                <span>Girar Tarjeta (Ver Anverso / Reverso)</span>
+              </button>
+            </div>
+
+            <!-- Ficha Técnica de la Tarjeta -->
+            <div style="margin-top: 14px; background: #ffffff; border: 1px solid var(--border-subtle); padding: 14px 16px; border-radius: var(--radius-md); font-size: 0.82rem; box-shadow: var(--shadow-sm);">
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9;">
+                <span style="color: var(--text-muted);">Correo Electrónico Vinculado:</span>
+                <strong id="card-email-info" style="color: var(--mugi-navy);">--</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9;">
+                <span style="color: var(--text-muted);">Estado del título:</span>
+                <strong id="card-status-info" style="color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                  <svg class="svg-icon" style="width: 1em; height: 1em; color: var(--mugi-green);"><use href="#icon-check"></use></svg>
+                  <span style="color: var(--mugi-green); font-weight: 700;">Activa</span>
+                </strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9;">
+                <span style="color: var(--text-muted);">Titular registrado:</span>
+                <span id="card-holder-name-info" style="font-weight: 600;">--</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9;">
+                <span style="color: var(--text-muted);">Caducidad soporte:</span>
+                <span id="card-expiry-info">--</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9;">
+                <span style="color: var(--text-muted);">Último uso registrado:</span>
+                <span id="card-last-use-info" style="font-weight: 600;">--</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                <span style="color: var(--text-muted);">Bonificación colectiva:</span>
+                <span id="card-bonus-info" style="font-weight: 700; color: var(--mugi-green);">Estándar</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cuadro de Saldo y Tramo ATTG Activo -->
+          <div>
+            <div class="balance-summary-box">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                  <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">Saldo Real Exacto Disponible</span>
+                  <div class="balance-amount-display">
+                    <span id="card-balance-val" class="amount">0.00</span>
+                    <span class="currency">€</span>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Viajes este mes</span>
+                  <div style="font-size: 1.8rem; font-weight: 800; color: var(--mugi-navy);" id="card-monthly-trips">0</div>
+                </div>
+              </div>
+
+              <!-- Sistema de Tramos ATTG -->
+              <div class="tier-progress-container" style="margin-top: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <strong id="tier-name" style="color: var(--mugi-navy); font-size: 0.95rem;">Tramo 1 (ATTG)</strong>
+                  <span id="tier-discount" style="font-weight: 700; color: var(--mugi-green); font-size: 0.85rem;">47% de descuento</span>
+                </div>
+                <div class="progress-bar-track">
+                  <div id="tier-progress-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                  <span>Tramo 1 (47% dto.)</span>
+                  <span>Tramo 2 (57% dto.)</span>
+                  <span>Tramo 3 (90% dto.)</span>
+                </div>
+                <div id="tier-next-msg" style="font-size: 0.8rem; color: #475569; margin-top: 8px;">
+                  Inicia sesión o consulta tu tarjeta para calcular tus viajes y tramo exacto.
+                </div>
+              </div>
+            </div>
+
+            <!-- Información sobre transbordos en MUGI -->
+            <div class="transfer-highlight-box" style="margin-top: 16px;">
+              <svg class="svg-icon" style="color: var(--mugi-green); width: 1.4em; height: 1.4em;"><use href="#icon-info"></use></svg>
+              <div>
+                <strong>Regla de transbordos ATTG:</strong>
+                <p style="margin-top: 2px;">Al cambiar entre diferentes medios de transporte (Tren a Bus o Bus a Tren) dentro de un intervalo de <strong>50 minutos</strong>, el segundo trayecto es <strong>gratuito o bonificado</strong> con tu tarjeta MUGI.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Últimos Movimientos -->
+        <div style="margin-top: 30px;">
+          <h3 style="font-size: 1.05rem; color: var(--mugi-navy); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            <svg class="svg-icon" style="color: var(--mugi-cyan);"><use href="#icon-clock"></use></svg>
+            <span>Historial de Movimientos y Validaciones Recientes</span>
+          </h3>
+          <div style="overflow-x: auto;">
+            <table class="gov-table">
+              <thead>
+                <tr>
+                  <th>Fecha y Hora</th>
+                  <th>Operador</th>
+                  <th>Línea / Trayecto</th>
+                  <th>Operación</th>
+                  <th>Bonificación Aplicada</th>
+                  <th>Importe</th>
+                  <th>Saldo Posterior</th>
+                </tr>
+              </thead>
+              <tbody id="card-movements-tbody">
+                <!-- Se llena dinámicamente con JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         TAB 2: RED INTEGRAL: TRENES Y BUSES TODO EN UNO
+         ===================================================================== -->
+    <div id="tab-red" class="tab-pane">
+      <div class="gov-card section-card">
+        <div class="section-hero">
+          <div class="section-hero-main">
+            <div class="section-hero-icon is-cyan">
+              <svg class="svg-icon"><use href="#icon-network"></use></svg>
+            </div>
+            <div>
+              <span class="section-eyebrow">Red de transporte</span>
+              <h2>Trenes y buses de Gipuzkoa</h2>
+              <p>Líneas, frecuencias y paradas de Euskotren, Renfe, Lurraldebus y Dbus, con dirección y enlace a Google Maps.</p>
+            </div>
+          </div>
+          <div class="view-toggle-group">
+            <button id="btn-view-lines" class="view-toggle-btn active" onclick="switchTransportView('lines')">
+              <svg class="svg-icon" style="width: 1em; height: 1em;"><use href="#icon-card"></use></svg>
+              <span>Catálogo de Líneas</span>
+            </button>
+            <button id="btn-view-map" class="view-toggle-btn" onclick="switchTransportView('map')">
+              <svg class="svg-icon" style="width: 1em; height: 1em;"><use href="#icon-globe"></use></svg>
+              <span>Mapa de Estaciones</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Panel de Mapa Interactivo de Gipuzkoa (Leaflet + Google Maps) -->
+        <div id="transport-map-panel" class="transport-map-card" style="display: none;">
+          <div class="map-card-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="status-dot"></span>
+              <strong>Visor Geográfico de Estaciones y Nodos de Gipuzkoa</strong>
+            </div>
+            <div class="map-legend">
+              <span><i class="legend-dot" style="--dot: var(--op-euskotren);"></i>Euskotren</span>
+              <span><i class="legend-dot" style="--dot: var(--op-renfe);"></i>Renfe</span>
+              <span><i class="legend-dot" style="--dot: var(--op-lurraldebus);"></i>Lurraldebus</span>
+              <span><i class="legend-dot" style="--dot: var(--op-dbus);"></i>Dbus</span>
+              <span><i class="legend-dot" style="--dot: var(--op-metrobilbao);"></i>Metro Bilbao</span>
+              <span><i class="legend-dot" style="--dot: var(--op-bizkaibus);"></i>Bizkaibus</span>
+            </div>
+          </div>
+          <div id="gipuzkoa-transport-map" style="height: 420px; width: 100%;"></div>
+        </div>
+
+        <!-- Buscador Moderno de Paradas con Dirección y Google Maps -->
+        <div class="stop-search-box">
+          <div class="search-head">
+            <label for="input-stop-search">Buscar parada o estación</label>
+            <span id="stops-counter-badge" class="count-pill">98 paradas disponibles</span>
+          </div>
+          <div class="search-input-wrap">
+            <svg class="svg-icon"><use href="#icon-search"></use></svg>
+            <input type="text" id="input-stop-search" class="form-control" placeholder="Herrera, Amara, Tolosa, Zarautz, Irun, Boulevard, Gros…">
+          </div>
+          <div id="stops-search-results" class="stops-results-container"></div>
+        </div>
+
+        <!-- Barra de Filtros por Operador -->
+        <div class="section-subhead">
+          <h3>Líneas en servicio</h3>
+          <span id="lines-counter-badge" class="count-pill is-muted">14 líneas intermodales activas</span>
+        </div>
+        <div class="filters-bar" id="operator-filters">
+          <button class="btn-filter active" onclick="filterLines('', '', this)">Todas</button>
+          <button class="btn-filter" style="--chip: var(--op-euskotren);" onclick="filterLines('euskotren', '', this)">
+            <svg class="svg-icon"><use href="#icon-train"></use></svg>
+            <span>Euskotren</span>
+          </button>
+          <button class="btn-filter" style="--chip: var(--op-renfe);" onclick="filterLines('renfe', '', this)">
+            <svg class="svg-icon"><use href="#icon-train"></use></svg>
+            <span>Renfe Cercanías</span>
+          </button>
+          <button class="btn-filter" style="--chip: var(--op-lurraldebus);" onclick="filterLines('lurraldebus', '', this)">
+            <svg class="svg-icon"><use href="#icon-bus"></use></svg>
+            <span>Lurraldebus</span>
+          </button>
+          <button class="btn-filter" style="--chip: var(--op-dbus);" onclick="filterLines('dbus', '', this)">
+            <svg class="svg-icon"><use href="#icon-bus"></use></svg>
+            <span>Dbus</span>
+          </button>
+          <button class="btn-filter" style="--chip: var(--op-metrobilbao);" onclick="filterLines('metrobilbao', '', this)">
+            <svg class="svg-icon"><use href="#icon-train"></use></svg>
+            <span>Metro Bilbao</span>
+          </button>
+          <button class="btn-filter" style="--chip: var(--op-bizkaibus);" onclick="filterLines('bizkaibus', '', this)">
+            <svg class="svg-icon"><use href="#icon-bus"></use></svg>
+            <span>Bizkaibus</span>
+          </button>
+        </div>
+        <div id="lines-container" class="lines-grid">
+          <!-- Tarjetas de líneas cargadas por app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         TAB 3: PLANIFICADOR DE TRANSBORDOS INTERMODALES
+         ===================================================================== -->
+    <div id="tab-planificador" class="tab-pane active">
+      <div class="gov-card section-card">
+        <div class="section-hero">
+          <div class="section-hero-main">
+            <div class="section-hero-icon is-green">
+              <svg class="svg-icon"><use href="#icon-transfer"></use></svg>
+            </div>
+            <div>
+              <span class="section-eyebrow">Planificador intermodal</span>
+              <h2>Planificar viaje</h2>
+              <p>Combina autobús y ferrocarril entre cualquier punto de Gipuzkoa, con tiempo de enlace a pie y la tarifa MUGI de cada opción.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario de Planificación -->
+        <div class="planner-form-grid">
+          <div class="planner-stops">
+            <div class="planner-field">
+              <span class="planner-node is-origin"></span>
+              <div class="form-group">
+                <label for="select-planner-origin">Origen</label>
+                <select id="select-planner-origin" class="form-control">
+                  <option value="">Cargando catálogo de paradas...</option>
+                </select>
+              </div>
+            </div>
+            <div class="planner-field">
+              <span class="planner-node is-dest"></span>
+              <div class="form-group">
+                <label for="select-planner-destination">Destino</label>
+                <select id="select-planner-destination" class="form-control">
+                  <option value="">Cargando catálogo de paradas...</option>
+                </select>
+              </div>
+            </div>
+            <button id="btn-swap-planner" class="planner-swap-btn" type="button" title="Intercambiar origen y destino" aria-label="Intercambiar origen y destino">
+              <svg class="svg-icon"><use href="#icon-swap"></use></svg>
+            </button>
+          </div>
+          <button id="btn-run-planner" class="btn-primary planner-submit">
+            <svg class="svg-icon"><use href="#icon-search"></use></svg>
+            <span>Calcular rutas</span>
+          </button>
+        </div>
+
+        <!-- Ejemplos Rápidos de Transbordo Real -->
+        <div class="preset-routes">
+          <span class="preset-routes-label">Prueba una ruta</span>
+          <div class="preset-routes-grid">
+            <button class="btn-preset-route" data-orig="Oiartzun Centro" data-dest="Gros">
+              <strong>Oiartzun <svg class="svg-icon"><use href="#icon-arrow-right"></use></svg> Gros</strong>
+              <span>Bus E02 · enlace Herrera · Tren C1</span>
+            </button>
+            <button class="btn-preset-route" data-orig="Tolosa Geltokia" data-dest="Hospital Donostia">
+              <strong>Tolosa <svg class="svg-icon"><use href="#icon-arrow-right"></use></svg> Hospitales</strong>
+              <span>Tren C1 · enlace Atotxa · Dbus 28</span>
+            </button>
+            <button class="btn-preset-route" data-orig="Zarautz San Pelaio" data-dest="Benta Berri (Resurrección María de Azkue)">
+              <strong>Zarautz <svg class="svg-icon"><use href="#icon-arrow-right"></use></svg> Benta Berri</strong>
+              <span>Euskotren E1 · Dbus 05</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Resultados de la Ruta Planificada -->
+        <div id="planner-results" style="margin-top: 24px;">
+          <div class="empty-state">
+            <svg class="svg-icon"><use href="#icon-transfer"></use></svg>
+            <strong>Elige origen y destino</strong>
+            <span>Te mostraremos las conexiones directas y con transbordo, con duración y precio.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         TAB 4: AVISOS E INCIDENCIAS + WEB SCRAPING EN VIVO DE MUGI.EUS
+         ===================================================================== -->
+    <div id="tab-incidencias" class="tab-pane">
+      <div class="gov-card section-card">
+        <div class="section-hero">
+          <div class="section-hero-main">
+            <div class="section-hero-icon is-amber">
+              <svg class="svg-icon"><use href="#icon-alert"></use></svg>
+            </div>
+            <div>
+              <span class="section-eyebrow">Estado de la red</span>
+              <h2>Avisos y comunicados</h2>
+              <p>Incidencias operativas, novedades y tarifas extraídas de la web pública <strong>mugi.eus</strong>.</p>
+            </div>
+          </div>
+          <button id="btn-trigger-scrape" class="btn-cyan">
+            <svg class="svg-icon"><use href="#icon-refresh"></use></svg>
+            <span>Actualizar desde mugi.eus</span>
+          </button>
+        </div>
+
+        <!-- Incidencias Activas en la Red con ML -->
+        <div class="section-block">
+          <div class="section-subhead">
+            <h3>
+              <svg class="svg-icon" style="color: #eab308;"><use href="#icon-alert"></use></svg>
+              <span>Incidencias activas</span>
+            </h3>
+          </div>
+
+          <!-- Filtro por Comarca / Zona -->
+          <div class="filters-bar">
+            <button class="btn-zone-filter btn-filter active" data-zone="all">Toda Gipuzkoa</button>
+            <button class="btn-zone-filter btn-filter" data-zone="Donostialdea">Donostialdea</button>
+            <button class="btn-zone-filter btn-filter" data-zone="Oarsoaldea">Oarsoaldea</button>
+            <button class="btn-zone-filter btn-filter" data-zone="Bidasoa">Bidasoa</button>
+            <button class="btn-zone-filter btn-filter" data-zone="Urola Kosta">Urola Kosta</button>
+            <button class="btn-zone-filter btn-filter" data-zone="Goierri">Goierri / Tolosaldea</button>
+          </div>
+
+          <!-- Lista de Incidencias -->
+          <div id="incidents-list-container">
+            <!-- Rellenado por app.js -->
+          </div>
+        </div>
+
+        <!-- Contenedor de Noticias Scrapeadas en Tiempo Real -->
+        <div class="section-block">
+          <div class="section-subhead">
+            <h3>
+              <span class="scraping-pulse-dot"></span>
+              <span>Últimos comunicados de mugi.eus</span>
+            </h3>
+            <div id="scrape-timestamp-badge" class="count-pill is-muted">Sincronizado: en directo</div>
+          </div>
+          <div id="mugi-scraped-news-container" class="scraped-news-grid">
+            <div style="color: var(--text-muted); font-size: 0.85rem; padding: 14px;">Cargando avisos de mugi.eus...</div>
+          </div>
+        </div>
+
+        <!-- Tablas de Tarifas Scrapeadas -->
+        <div class="section-block">
+          <div class="section-subhead">
+            <h3>
+              <svg class="svg-icon" style="color: var(--mugi-green);"><use href="#icon-card"></use></svg>
+              <span>Tarifas MUGI por saltos y tramos</span>
+            </h3>
+          </div>
+          <div id="mugi-scraped-tariffs-container" class="tariffs-grid">
+            <!-- Renderizado dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================================
+         TAB 5: DETECTOR PREDICTIVO CON MACHINE LEARNING
+         ===================================================================== -->
+    <div id="tab-ml" class="tab-pane">
+      
+      <!-- 1. Hero Banner Pipeline Scikit-Learn -->
+      <div class="ml-hero-banner">
+        <div class="ml-hero-title">
+          <div class="ml-hero-icon">
+            <svg class="svg-icon"><use href="#icon-brain"></use></svg>
+          </div>
+          <div>
+            <span class="ml-hero-eyebrow"><span class="live-dot"></span>Modelo activo · Scikit-Learn NLP</span>
+            <h2>Predicción de incidencias</h2>
+            <p>Evalúa avisos en tiempo real: severidad, categoría, demora estimada y alternativa multimodal.</p>
+          </div>
+        </div>
+        <button id="btn-retrain-ml" class="btn-ghost-light">
+          <svg class="svg-icon"><use href="#icon-refresh"></use></svg>
+          <span>Re-entrenar modelo</span>
+        </button>
+      </div>
+
+      <!-- 2. Grid de Métricas KPI del Modelo -->
+      <div class="ml-kpi-grid">
+        <div class="ml-kpi-card">
+          <div class="ml-kpi-icon is-green"><svg class="svg-icon"><use href="#icon-check"></use></svg></div>
+          <div class="ml-kpi-label">Precisión severidad</div>
+          <div class="ml-kpi-val"><span id="ml-metrics-accuracy">96.7%</span></div>
+          <div class="ml-kpi-desc">Clasificador logístico multiclase</div>
+        </div>
+        <div class="ml-kpi-card">
+          <div class="ml-kpi-icon is-cyan"><svg class="svg-icon"><use href="#icon-search"></use></svg></div>
+          <div class="ml-kpi-label">Categorización NLP</div>
+          <div class="ml-kpi-val"><span id="ml-metrics-cat-acc">93.3%</span></div>
+          <div class="ml-kpi-desc">TF-IDF con n-gramas (1, 2)</div>
+        </div>
+        <div class="ml-kpi-card">
+          <div class="ml-kpi-icon is-amber"><svg class="svg-icon"><use href="#icon-clock"></use></svg></div>
+          <div class="ml-kpi-label">Error en demoras</div>
+          <div class="ml-kpi-val">±3 <span class="unit">min</span></div>
+          <div class="ml-kpi-desc">Regresión Ridge (L2)</div>
+        </div>
+        <div class="ml-kpi-card">
+          <div class="ml-kpi-icon is-navy"><svg class="svg-icon"><use href="#icon-info"></use></svg></div>
+          <div class="ml-kpi-label">Corpus entrenado</div>
+          <div class="ml-kpi-val"><span id="ml-metrics-samples">30</span> <span class="unit">casos</span></div>
+          <div class="ml-kpi-desc">Incidencias verificadas de Gipuzkoa</div>
+        </div>
+      </div>
+
+      <!-- 3. Consola Interactiva del Simulador ML -->
+      <div class="ml-console-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--mugi-navy); display: flex; align-items: center; gap: 8px;">
+              <svg class="svg-icon" style="color: var(--mugi-green);"><use href="#icon-bolt"></use></svg>
+              <span>Simulador Predictivo de Disrupciones e Incidencias</span>
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              Escribe cualquier alerta o selecciona un caso de prueba para evaluar la predicción en milisegundos:
+            </p>
+          </div>
+          <div id="ml-trained-timestamp" style="font-size: 0.78rem; color: var(--text-muted);">
+            Último entrenamiento: <span id="ml-metrics-trained-at" style="font-weight: 600; color: var(--mugi-navy);">-</span>
+          </div>
+        </div>
+
+        <!-- Presets de Pruebas Rápidas -->
+        <div style="margin-bottom: 12px;">
+          <span style="font-size: 0.76rem; font-weight: 700; color: var(--mugi-navy); text-transform: uppercase; letter-spacing: 0.3px;">Escenarios de prueba inmediata:</span>
+          <div class="ml-presets-grid">
+            <button class="ml-preset-chip active" data-text="Avería grave en la catenaria entre Herrera y Lezo-Errenteria. Circulación totalmente interrumpida en ambos sentidos.">
+              <i class="sev-dot" style="--dot: #ef4444;"></i> Avería catenaria Herrera
+            </button>
+            <button class="ml-preset-chip" data-text="Incendio en la vía férrea a la altura de Zumaia. Suspendida la circulación ferroviaria Donostia-Bilbao de Euskotren.">
+              <i class="sev-dot" style="--dot: #ef4444;"></i> Vía cortada Zumaia
+            </button>
+            <button class="ml-preset-chip" data-text="Accidente múltiple en la autopista AP-8 a la altura de Zarautz. Retenciones kilométricas y retrasos de 30 minutos en autobuses DO01 y UK09.">
+              <i class="sev-dot" style="--dot: #f97316;"></i> Accidente AP-8 Zarautz
+            </button>
+            <button class="ml-preset-chip" data-text="Manifestación en el Boulevard donostiarra. Las líneas de Dbus 05, 13, 26 y 28 trasladan su parada cabecera a Okendo.">
+              <i class="sev-dot" style="--dot: #eab308;"></i> Manifestación Boulevard
+            </button>
+            <button class="ml-preset-chip" data-text="Huelga general del sector de transportes en Gipuzkoa. Servicios mínimos del 30% en Lurraldebus y Dbus durante toda la jornada.">
+              <i class="sev-dot" style="--dot: #f97316;"></i> Huelga de transportes
+            </button>
+            <button class="ml-preset-chip" data-text="Aviso informativo: Ascensor de acceso al andén 2 de la estación de Zarautz San Pelaio fuera de servicio por mantenimiento.">
+              <i class="sev-dot" style="--dot: #10b981;"></i> Ascensor fuera de servicio
+            </button>
+          </div>
+        </div>
+
+        <label for="input-custom-alert" style="display: block; font-size: 0.84rem; font-weight: 700; color: var(--mugi-navy); margin-bottom: 6px;">
+          Texto del comunicado o incidencia de transporte a procesar:
+        </label>
+        <textarea id="input-custom-alert" class="form-control" rows="3" placeholder="Introduce aquí el texto de una alerta, retraso o avería...">Avería grave en la catenaria entre Herrera y Lezo-Errenteria. Circulación totalmente interrumpida en ambos sentidos.</textarea>
+        
+        <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="font-size: 0.78rem; color: var(--text-muted);">
+            Procesado con Stop-words en castellano y euskera + Tokenización N-Grams
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button id="btn-clear-ml-text" class="btn-secondary" style="font-size: 0.8rem; padding: 0 14px;">
+              <span>Limpiar</span>
+            </button>
+            <button id="btn-analyze-ml" class="btn-primary" style="font-size: 0.84rem;">
+              <svg class="svg-icon"><use href="#icon-bolt"></use></svg>
+              <span>Evaluar con Machine Learning</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Salida del Análisis Predictivo Renderizada -->
+        <div id="ml-analysis-result">
+          <!-- Renderizado dinámicamente por app.js al iniciar -->
+        </div>
+      </div>
+
+      <!-- 4. Incidencias Reales del Transporte Analizadas en Directo -->
+      <div class="gov-card" style="margin-top: 24px;">
+        <div class="gov-card-header">
+          <div>
+            <h3 style="font-size: 1.08rem; color: var(--mugi-navy); display: flex; align-items: center; gap: 8px; margin: 0;">
+              <svg class="svg-icon" style="color: #eab308;"><use href="#icon-alert"></use></svg>
+              <span>Incidencias Activas en Gipuzkoa Clasificadas por la IA</span>
+            </h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+              Alertas y avisos operativos en la red categorizados automáticamente por el pipeline de Scikit-Learn.
+            </p>
+          </div>
+        </div>
+
+        <!-- Filtros por Comarca en la pestaña ML -->
+        <div class="filters-bar" style="margin-bottom: 16px;">
+          <span style="font-size: 0.82rem; font-weight: 700; color: var(--mugi-navy);">Comarca:</span>
+          <button class="btn-zone-filter btn-filter active" data-zone="all">Toda Gipuzkoa</button>
+          <button class="btn-zone-filter btn-filter" data-zone="Donostialdea">Donostialdea</button>
+          <button class="btn-zone-filter btn-filter" data-zone="Oarsoaldea">Oarsoaldea</button>
+          <button class="btn-zone-filter btn-filter" data-zone="Bidasoa">Bidasoa</button>
+          <button class="btn-zone-filter btn-filter" data-zone="Urola Kosta">Urola Kosta</button>
+          <button class="btn-zone-filter btn-filter" data-zone="Goierri">Goierri</button>
+        </div>
+
+        <div id="ml-incidents-feed-container">
+          <!-- Incidencias con análisis ML renderizadas por app.js -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- =====================================================================
+       MODALES DE ACCIÓN Y AUTENTICACIÓN
+       ===================================================================== -->
+  
+  <!-- Modal 1: Autenticación por Correo y Contraseña -->
+  <div id="modal-auth" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; margin-bottom: 16px;">
+        <div>
+          <h3 style="color: var(--mugi-navy); font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+            <svg class="svg-icon" style="color: var(--mugi-green);"><use href="#icon-lock"></use></svg>
+            <span>Acceso MUGI con Correo y Contraseña</span>
+          </h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Inicia sesión con tu correo electrónico o registra tu tarjeta con tu saldo real</p>
+        </div>
+        <button onclick="closeModal('modal-auth')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+          <svg class="svg-icon" style="width: 1.3em; height: 1.3em;"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+
+      <div class="auth-tab-nav">
+        <button class="auth-tab-btn active" data-auth-tab="auth-login-pane">Iniciar Sesión</button>
+        <button class="auth-tab-btn" data-auth-tab="auth-register-pane">Crear Cuenta con Saldo Real</button>
+      </div>
+
+      <!-- Panel A: Login con Correo y Contraseña -->
+      <div id="auth-login-pane" class="auth-sub-pane">
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 12px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 0.82rem; color: #166534; display: flex; gap: 8px; align-items: flex-start;">
+          <svg class="svg-icon" style="color: var(--mugi-green); flex-shrink: 0; margin-top: 2px;"><use href="#icon-shield"></use></svg>
+          <div>
+            <strong>MugiManager no es una app oficial de MUGI ni de ATTG.</strong> Si usas el correo y la contraseña de tu cuenta del portal de MUGI (<em>gunepribatua.atgipuzkoa.eus</em>), se envían a nuestro servidor solo para iniciar sesión en ese portal y leer tu saldo y movimientos. La contraseña no se guarda en claro.
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 14px;">
+          <label for="input-login-email">Correo Electrónico:</label>
+          <input type="email" id="input-login-email" class="form-control" placeholder="tu.correo@ejemplo.com" autocomplete="email">
+        </div>
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="input-login-password">Contraseña:</label>
+          <input type="password" id="input-login-password" class="form-control" placeholder="Tu contraseña de acceso web MUGI" autocomplete="current-password">
+        </div>
+
+        <div id="login-error-alert" style="display: none; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; font-size: 0.82rem; line-height: 1.4;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn-secondary" onclick="closeModal('modal-auth')">Cancelar</button>
+          <button id="btn-submit-login" class="btn-primary">
+            <svg class="svg-icon"><use href="#icon-lock"></use></svg>
+            <span>Acceder con mi Cuenta MUGI</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel B: Registro con Correo, Contraseña y Saldo Real -->
+      <div id="auth-register-pane" class="auth-sub-pane" style="display: none;">
+        <p style="font-size: 0.84rem; color: #065f46; background: var(--mugi-green-light); border: 1px solid var(--mugi-green-border); padding: 10px; border-radius: 6px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+          <svg class="svg-icon" style="color: var(--mugi-green);"><use href="#icon-info"></use></svg>
+          <span>Si no tienes cuenta en el portal de MUGI, crea tu perfil aquí indicando tu <strong>correo</strong>, <strong>contraseña</strong> y el <strong>saldo real exacto</strong> de tu tarjeta.</span>
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label for="input-reg-email">Tu Correo Electrónico:</label>
+            <input type="email" id="input-reg-email" class="form-control" placeholder="tu.correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label for="input-reg-pass">Tu Contraseña:</label>
+            <input type="password" id="input-reg-pass" class="form-control" placeholder="Mínimo 4 caracteres">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group">
+            <label for="input-reg-name">Nombre y Apellidos:</label>
+            <input type="text" id="input-reg-name" class="form-control" placeholder="Ej: Nombre y Apellidos">
+          </div>
+          <div class="form-group">
+            <label for="input-reg-card">Nº de Tarjeta MUGI (10 dígitos):</label>
+            <input type="text" id="input-reg-card" class="form-control" placeholder="Ej: 4800123456">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div class="form-group">
+            <label for="input-reg-balance" style="color: var(--mugi-green); font-weight: 700;">Saldo Real Actual (€):</label>
+            <input type="number" id="input-reg-balance" class="form-control" step="0.01" min="0" placeholder="Ej: 3.40">
+          </div>
+          <div class="form-group">
+            <label for="input-reg-trips">Viajes este mes (opcional):</label>
+            <input type="number" id="input-reg-trips" class="form-control" value="0" min="0" placeholder="Ej: 10">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 16px;">
+          <label for="select-reg-type">Tipo de Tarjeta MUGI:</label>
+          <select id="select-reg-type" class="form-control">
+            <option value="MUGI Ordinaria (Arrunta)">MUGI Ordinaria (Arrunta)</option>
+            <option value="MUGI Gaztea (<26)">MUGI Gaztea (&lt;26 años)</option>
+            <option value="MUGI Familia Ugari Orokorra">Familia Numerosa General</option>
+            <option value="MUGI Familia Ugari Berezia">Familia Numerosa Especial</option>
+            <option value="MUGI Adindua (>65)">MUGI Adindua (&gt;65 años)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button class="btn-secondary" onclick="closeModal('modal-auth')">Cancelar</button>
+          <button id="btn-submit-register" class="btn-primary">
+            <svg class="svg-icon"><use href="#icon-check"></use></svg>
+            <span>Crear Cuenta y Guardar Tarjeta</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Simular Viaje / Transbordo -->
+  <div id="modal-simulate" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3 style="color: var(--mugi-navy); font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+          <svg class="svg-icon" style="color: var(--mugi-cyan);"><use href="#icon-transfer"></use></svg>
+          <span>Simular Validación de Viaje / Transbordo</span>
+        </h3>
+        <button onclick="closeModal('modal-simulate')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+          <svg class="svg-icon" style="width: 1.3em; height: 1.3em;"><use href="#icon-close"></use></svg>
+        </button>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="sim-operator">Operador del servicio:</label>
+        <select id="sim-operator" class="form-control">
+          <option value="Euskotren">Euskotren Trena</option>
+          <option value="Renfe Cercanías">Renfe Cercanías</option>
+          <option value="Lurraldebus">Lurraldebus</option>
+          <option value="Dbus">Dbus</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 12px;">
+        <label for="sim-line">Línea:</label>
+        <input type="text" id="sim-line" class="form-control" value="E2 Topo">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label for="sim-stoppair">Trayecto validado:</label>
+        <input type="text" id="sim-stoppair" class="form-control" value="Herrera -> Donostia Amara">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="sim-is-transfer" style="width: 18px; height: 18px;">
+          <span><strong>Es un transbordo bonificado ATTG</strong> (Segundo viaje dentro de los primeros 50 minutos: coste 0.00€)</span>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn-secondary" onclick="closeModal('modal-simulate')">Cancelar</button>
+        <button id="btn-confirm-simulate" class="btn-primary">
+          <svg class="svg-icon"><use href="#icon-check"></use></svg>
+          <span>Registrar en Tarjeta</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Detalle de Paradas de Línea con Dirección y Google Maps -->
+  <div id="modal-line-detail" class="modal-backdrop">
+    <div class="modal-box" style="max-width: 760px; width: 94%;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-subtle); padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 id="modal-line-title" style="color: var(--mugi-navy); font-size: 1.2rem; display: flex; align-items: center; gap: 10px; margin-bottom: 4px;"></h3>
+          <div id="modal-line-meta" style="font-size: 0.82rem; color: var(--text-muted);"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <a id="modal-line-maps-btn" target="_blank" rel="noopener noreferrer" class="btn-maps-link" style="background: #f0fdf4; border-color: var(--mugi-green); color: #166534; font-weight: 700; padding: 6px 12px;" title="Ver trayecto completo en Google Maps">
+            <svg class="svg-icon" style="width: 1em; height: 1em; color: var(--mugi-green);"><use href="#icon-globe"></use></svg>
+            <span>Ver Ruta en Google Maps</span>
+          </a>
+          <button onclick="closeModal('modal-line-detail')" style="background: none; border: none; cursor: pointer; color: var(--text-muted);">
+            <svg class="svg-icon" style="width: 1.3em; height: 1.3em;"><use href="#icon-close"></use></svg>
+          </button>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #f8fafc; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border-subtle); font-size: 0.82rem;">
+        <span style="font-weight: 700; color: var(--mugi-navy);">Itinerario y secuencia de paradas</span>
+        <span style="color: var(--text-muted);">Dirección y enlace a Google Maps en cada parada</span>
+      </div>
+
+      <div style="max-height: 55vh; overflow-y: auto; padding-right: 6px;">
+        <ul id="modal-line-stops" class="line-timeline"></ul>
+      </div>
+
+      <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+        <span style="font-size: 0.78rem; color: var(--text-muted);">Tarifas integradas con descuento MUGI en todas las paradas</span>
+        <button class="btn-secondary" onclick="closeModal('modal-line-detail')">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. Footer -->
+  <footer class="gov-footer">
+    <div class="footer-content">
+      <div class="footer-entity">
+        <h3>MugiManager</h3>
+        <p>Proyecto independiente. No está afiliado a MUGI, a la Autoridad Territorial del Transporte de Gipuzkoa (ATTG) ni a los operadores.</p>
+      </div>
+      <div style="font-size: 0.78rem; text-align: right; color: #94a3b8;">
+        <div>Euskotren &bull; Renfe Cercanías &bull; Lurraldebus &bull; Dbus &bull; Metro Bilbao &bull; Bizkaibus</div>
+        <div>Avisos y tarifas obtenidos de la web pública mugi.eus. Horarios y tiempos orientativos.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/config.js?v=14.0"></script>
+  <script src="js/app.js?v=14.0"></script>
+  <script>
+    function filterLines(op, mode, btn) {
+      document.querySelectorAll('#operator-filters .btn-filter').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      loadLines(op, mode);
+    }
+  </script>
+</body>
+</html>

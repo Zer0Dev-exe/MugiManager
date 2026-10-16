@@ -1,0 +1,15 @@
+.venv
+node_modules
+android
+assets
+.github
+backend/data
+test_*.py
+verify_backend.py
+Tarjeta_*.jpg
+frontend/img/Tarjeta_*.jpg
+frontend/img/holder_ane.jpg
+frontend/img/card_straight.png
+frontend/img/*shield*.png
+frontend/favicon.*
+frontend/img/favicon.*
